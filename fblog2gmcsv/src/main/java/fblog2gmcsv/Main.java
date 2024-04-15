@@ -14,26 +14,35 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Main {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         List<String> result = new ArrayList<>();
-
 
         String inputJsonFile = "";
 
-        //parameter check
-        if(1 > args.length){
+        // parameter check
+        if (1 > args.length) {
             inputJsonFile = "./data/your_posts__check_ins__photos_and_videos_1.json";
-        }else{
+        } else {
             inputJsonFile = args[0];
         }
 
-
         // Read JSON file
-        ObjectMapper objectMapper = new ObjectMapper();
-        List<Map<String, Object>> dataList = objectMapper.readValue(
-                new File(inputJsonFile),
-                new TypeReference<List<Map<String, Object>>>() {
-                });
+        List<Map<String, Object>> dataList = null;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            dataList = objectMapper.readValue(
+                    new File(inputJsonFile),
+                    new TypeReference<List<Map<String, Object>>>() {
+                    });
+        } catch (IOException e) {
+            System.out.println("InputFile Not Found!");
+            System.out.println("usage: java -jar fblog2gmcsv.jar [input.json]");
+            System.out.println("ex.1) java -jar fblog2gmcsv.jar ./data/your_posts__check_ins__photos_and_videos_1.json");
+            System.out.println("ex.2) java -jar fblog2gmcsv.jar ./data/your_posts__check_ins__photos_and_videos_1.json > output.csv");
+            System.out.println();
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         // charactor convert lint1 to utf8
         listCharSetConv(dataList);
@@ -129,7 +138,7 @@ public class Main {
                 });
             } else {
                 if (java.lang.String.class == value.getClass()) {
-                    node.put(key, convlatin1toUTF8(value.toString()));
+                    node.put(key, convlatin1toUTF8(value.toString())); // この要素が文字列要素なら変換
                 }
             }
 
@@ -145,11 +154,11 @@ public class Main {
                 List<Class> c = Arrays.asList(value.getClass().getInterfaces());
                 if (c.contains(java.util.List.class)) { // この要素がリストの場合
                     listCharSetConv((List) value);
-                } else if (c.contains(java.util.Map.class)) {
+                } else if (c.contains(java.util.Map.class)) { // この要素がMapの場合
                     mapCharSetConv((Map) value);
                 } else {
                     if (java.lang.String.class == value.getClass()) {
-                        m.put(key, convlatin1toUTF8(value.toString()));
+                        m.put(key, convlatin1toUTF8(value.toString())); // この要素が文字列要素なら変換
                     }
                 }
             });
@@ -159,7 +168,7 @@ public class Main {
 
     private static String convlatin1toUTF8(String latin1String) {
         try {
-            // Latin-1 to  UTF-8 Convert
+            // Latin-1 to UTF-8 Convert
             byte[] latin1Bytes = latin1String.getBytes("ISO-8859-1");
             String utf8String = new String(latin1Bytes, "UTF-8");
             return utf8String;

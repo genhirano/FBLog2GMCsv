@@ -145,7 +145,7 @@ public class Main {
                 List<Class> c = Arrays.asList(value.getClass().getInterfaces());
                 if (c.contains(java.util.List.class)) { // この要素がリストの場合
                     listCharSetConv((List) value);
-                } else if (c.contains(java.util.Map.class)) { // この要素がMapの場合
+                } else if (c.contains(java.util.Map.class)) {
                     mapCharSetConv((Map) value);
                 } else {
                     if (java.lang.String.class == value.getClass()) {

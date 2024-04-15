@@ -2,15 +2,10 @@ package fblog2gmcsv;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -18,66 +13,37 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Main {
 
-
-    private static void convlatin1toUTF8(String latin1String) {
-        try {
-            // Latin-1からUTF-8に変換
-            byte[] latin1Bytes = latin1String.getBytes("ISO-8859-1");
-            String utf8String = new String(latin1Bytes, "UTF-8");
-
-            System.out.println("UTF-8 String: " + utf8String);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static void main(String[] args) throws IOException {
-
         List<String> result = new ArrayList<>();
 
-        /*
-         * try {
-         * // Latin-1からUTF-8に変換
-         * byte[] latin1Bytes = latin1String.getBytes("ISO-8859-1");
-         * String utf8String = new String(latin1Bytes, "UTF-8");
-         * 
-         * System.out.println("UTF-8 String: " + utf8String);
-         * } catch (UnsupportedEncodingException e) {
-         * e.printStackTrace();
-         * }
-         */
 
+        String inputJsonFile = "";
+
+        //parameter check
+        if(1 > args.length){
+            inputJsonFile = "./data/your_posts__check_ins__photos_and_videos_1.json";
+        }else{
+            inputJsonFile = args[0];
+        }
+
+
+        // Read JSON file
         ObjectMapper objectMapper = new ObjectMapper();
         List<Map<String, Object>> dataList = objectMapper.readValue(
-                new File("./data/your_posts__check_ins__photos_and_videos_1.json"),
+                new File(inputJsonFile),
                 new TypeReference<List<Map<String, Object>>>() {
                 });
 
-        Set<String> set = new HashSet<String>();
+        // charactor convert lint1 to utf8
+        listCharSetConv(dataList);
 
-
-
-                
-
-
-        System.out.println(dataList.size());
-        for (Map<String, Object> map : dataList) {
-            for (String key : map.keySet()) {
-                //System.out.println(map.get(key).getClass().getName());
-                set.add(map.get(key).getClass().getName());
-            }
-        }   
-        System.out.println(set);
-
-
-
-        // パースしたデータを使って何か処理を行う
         for (Map<String, Object> map : dataList) {
             String post = "";
-            Map<String, String> place = new TreeMap<>();
+            final Map<String, String> place = new TreeMap<>();
 
             for (String key : map.keySet()) {
+
                 if ("data".equals(key)) {
 
                     for (Map<String, Object> map2 : (ArrayList<Map<String, Object>>) map.get("data")) {
@@ -115,32 +81,91 @@ public class Main {
                             }
                         }
                     }
-                } else {
-                    // System.out.println(key);
                 }
+
             }
 
-            String tmp = "";
-            if (0 < place.size() && !place.get("latitude").toString().equals("")) {
-                tmp = place.get("name").replaceAll(",", "_")
+            // create one line string
+            String oneLineStr = "";
+            if (0 < place.size() && !place.get("latitude").toString().trim().equals("")) {
+                oneLineStr = place.get("name").replaceAll(",", " ")
                         + ","
                         + place.get("latitude")
                         + ","
                         + place.get("longitude")
                         + ","
-                        + place.get("address")
+                        + place.get("address").replaceAll(",", " ")
                         + ","
-                        + post.replaceAll("\n", " ").replaceAll("\r", " ");
-                result.add(tmp);
+                        + post.replaceAll("\n", " ").replaceAll("\r", " ").replaceAll(",", " ");
+
+                result.add(oneLineStr);
             }
         }
 
+        // Title Line
         result.add(0, "name,lat,long,adress,message");
-        ;
-        Path out = Paths.get("data/output.csv");
-        
-        Files.write(out, result, Charset.forName("UTF-8"));
 
+        // output for Console
+        for (String s : result) {
+            System.out.println(s);
+        }
+
+        // Path out = Paths.get("data/output.csv");
+        // Files.write(out, result, Charset.forName("UTF-8"));
+
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static Map<String, Object> mapCharSetConv(Map<String, Object> node) {
+        node.forEach((key, value) -> {
+
+            List<Class> c = Arrays.asList(value.getClass().getInterfaces());
+
+            if (c.contains(java.util.List.class)) { // 要素がリストの場合
+                listCharSetConv((List) value);
+            } else if (c.contains(java.util.Map.class)) { // 要素がMapの場合
+                ((Map) value).forEach((key2, Value2) -> {
+                    mapCharSetConv((Map) value);
+                });
+            } else {
+                if (java.lang.String.class == value.getClass()) {
+                    node.put(key, convlatin1toUTF8(value.toString()));
+                }
+            }
+
+        });
+
+        return node;
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static List<Map<String, Object>> listCharSetConv(List<Map<String, Object>> node) {
+        for (Map<String, Object> m : node) {
+            m.forEach((key, value) -> {
+                List<Class> c = Arrays.asList(value.getClass().getInterfaces());
+                if (c.contains(java.util.List.class)) { // この要素がリストの場合
+                    listCharSetConv((List) value);
+                } else if (c.contains(java.util.Map.class)) { // この要素がMapの場合
+                    mapCharSetConv((Map) value);
+                } else {
+                    if (java.lang.String.class == value.getClass()) {
+                        m.put(key, convlatin1toUTF8(value.toString()));
+                    }
+                }
+            });
+        }
+        return node;
+    }
+
+    private static String convlatin1toUTF8(String latin1String) {
+        try {
+            // Latin-1 to  UTF-8 Convert
+            byte[] latin1Bytes = latin1String.getBytes("ISO-8859-1");
+            String utf8String = new String(latin1Bytes, "UTF-8");
+            return utf8String;
+        } catch (Exception e) {
+            throw new Error("Can't Convert : " + latin1String);
+        }
     }
 
 }

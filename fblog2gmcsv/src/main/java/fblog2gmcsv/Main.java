@@ -125,11 +125,6 @@ public class Main {
         // Title Line
         result.add(0, "name,lat,long,adress,message");
 
-        // output for Console
-        // for (String s : result) {
-        // System.out.println(s);
-        // }
-
         final String outputFileName = "./output.csv";
         try {
             Path out = Paths.get(outputFileName);

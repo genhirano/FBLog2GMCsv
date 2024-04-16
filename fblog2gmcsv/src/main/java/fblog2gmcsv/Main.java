@@ -1,7 +1,16 @@
 package fblog2gmcsv;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Main {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         List<String> result = new ArrayList<>();
 
         String inputJsonFile = "";
@@ -37,8 +46,10 @@ public class Main {
         } catch (IOException e) {
             System.out.println("InputFile Not Found!");
             System.out.println("usage: java -jar fblog2gmcsv.jar [input.json]");
-            System.out.println("ex.1) java -jar fblog2gmcsv.jar ./data/your_posts__check_ins__photos_and_videos_1.json");
-            System.out.println("ex.2) java -jar fblog2gmcsv.jar ./data/your_posts__check_ins__photos_and_videos_1.json > output.csv");
+            System.out
+                    .println("ex.1) java -jar fblog2gmcsv.jar ./data/your_posts__check_ins__photos_and_videos_1.json");
+            System.out.println(
+                    "ex.2) java -jar fblog2gmcsv.jar ./data/your_posts__check_ins__photos_and_videos_1.json > output.csv");
             System.out.println();
             e.printStackTrace();
             System.exit(1);
@@ -115,13 +126,19 @@ public class Main {
         result.add(0, "name,lat,long,adress,message");
 
         // output for Console
-        for (String s : result) {
-            System.out.println(s);
+        // for (String s : result) {
+        // System.out.println(s);
+        // }
+
+        final String outputFileName = "./output.csv";
+        try {
+            Path out = Paths.get(outputFileName);
+            Files.write(out, result, Charset.forName("UTF-8"));
+            System.out.println("SUCCESS!  Output File: " + outputFileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
         }
-
-        // Path out = Paths.get("data/output.csv");
-        // Files.write(out, result, Charset.forName("UTF-8"));
-
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -129,10 +146,18 @@ public class Main {
         node.forEach((key, value) -> {
 
             List<Class> c = Arrays.asList(value.getClass().getInterfaces());
+            // java21以降は,HashMapではなく、SequencedMapが使われるようなので、ここで判定する
+            Boolean isMap = false;
+            for (Class cc : c) {
+                if (cc.getName().contains("Map")) {
+                    isMap = true;
+                    break;
+                }
+            }
 
             if (c.contains(java.util.List.class)) { // 要素がリストの場合
                 listCharSetConv((List) value);
-            } else if (c.contains(java.util.Map.class)) { // 要素がMapの場合
+            } else if (isMap) { // 要素がMapの場合
                 ((Map) value).forEach((key2, Value2) -> {
                     mapCharSetConv((Map) value);
                 });
@@ -150,11 +175,22 @@ public class Main {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static List<Map<String, Object>> listCharSetConv(List<Map<String, Object>> node) {
         for (Map<String, Object> m : node) {
+
             m.forEach((key, value) -> {
                 List<Class> c = Arrays.asList(value.getClass().getInterfaces());
+
+                // java21以降は,HashMapではなく、SequencedMapが使われるようなので、ここで判定する
+                Boolean isMap = false;
+                for (Class cc : c) {
+                    if (cc.getName().contains("Map")) {
+                        isMap = true;
+                        break;
+                    }
+                }
+
                 if (c.contains(java.util.List.class)) { // この要素がリストの場合
                     listCharSetConv((List) value);
-                } else if (c.contains(java.util.Map.class)) { // この要素がMapの場合
+                } else if (isMap) { // この要素がMapの場合
                     mapCharSetConv((Map) value);
                 } else {
                     if (java.lang.String.class == value.getClass()) {

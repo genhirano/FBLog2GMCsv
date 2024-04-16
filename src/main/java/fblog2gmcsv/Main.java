@@ -1,13 +1,11 @@
 package fblog2gmcsv;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,9 +43,7 @@ public class Main {
             System.out.println("InputFile Not Found!");
             System.out.println("usage: java -jar fblog2gmcsv.jar [input.json]");
             System.out
-                    .println("ex.1) java -jar fblog2gmcsv.jar ./data/your_posts__check_ins__photos_and_videos_1.json");
-            System.out.println(
-                    "ex.2) java -jar fblog2gmcsv.jar ./data/your_posts__check_ins__photos_and_videos_1.json > output.csv");
+                    .println("ex) java -jar fblog2gmcsv.jar ./data/your_posts__check_ins__photos_and_videos_1.json");
             System.out.println();
             e.printStackTrace();
             System.exit(1);

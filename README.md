@@ -4,7 +4,7 @@ Facebook Checkin log - TO -  GoogmeMap(MyMap) Plot import CSV
 
 
 ## 概要
-このプログラムは、Facebookから取得した投稿データのバックアップファイルから、そのチェックイン座標をGoogleMap（マイマップ）にプロットするためのCSVファイルを生成します。
+このJavaプログラムは、Facebookから取得した投稿データのバックアップファイルから、そのチェックイン座標をGoogleMap（マイマップ）にプロットするためのCSVファイルを生成します。
 
 ## 前提条件
 * Facebookから、Json形式でバックアップファイルがダウンロード済みであること
